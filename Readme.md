@@ -27,22 +27,37 @@ def remove_task(tasks, index):
 def update_task(tasks, index, task):
     return tasks[:index] + [task] + tasks[index+1:]
 
+## Recursion:
+
+def filter_tasks(tasks, filters, index=0):
+    if index >= len(filters):
+        print("Debug: Filtered tasks", tasks)
+        return tasks
+
+    current_filter_key, current_filter_value = filters[index]
+    if current_filter_key == 'category':
+        filtered_tasks = list(filter(lambda x: x['category'].lower() == current_filter_value.lower(), tasks))
+    elif current_filter_key == 'deadline':
+        filtered_tasks = list(filter(lambda x: datetime.strptime(x['deadline'], '%Y-%m-%d') <= datetime.strptime(current_filter_value, '%Y-%m-%d'), tasks))
+
+    return filter_tasks(filtered_tasks, filters, index + 1)  # Recursive call with the next filter index
 
 
 ## Functional Programming Features:
 
-filter_tasks uses the filter function.
+def filter_tasks(tasks, filters, index=0):
+    if index >= len(filters):
+        print("Debug: Filtered tasks", tasks)
+        return tasks
 
+    current_filter_key, current_filter_value = filters[index]
+    if current_filter_key == 'category':
+        filtered_tasks = list(filter(lambda x: x['category'].lower() == current_filter_value.lower(), tasks))
+    elif current_filter_key == 'deadline':
+        filtered_tasks = list(filter(lambda x: datetime.strptime(x['deadline'], '%Y-%m-%d') <= datetime.strptime(current_filter_value, '%Y-%m-%d'), tasks))
 
-def filter_tasks(tasks, category=None, deadline=None):
-    if category:
-        tasks = filter(lambda x: x['category'].lower() == category.lower(), tasks)
-    if deadline:
-        tasks = filter(lambda x: datetime.strptime(x['deadline'], '%Y-%m-%d') <= datetime.strptime(deadline, '%Y-%m-%d'), tasks)
-    filtered_tasks = list(tasks)
-    return filtered_tasks
-Higher-Order Functions
-apply_to_tasks is a higher-order function that applies a given operation to each task.
+    return filter_tasks(filtered_tasks, filters, index + 1)  # Recursive call with the next filter index
+
 
 
 def apply_to_tasks(tasks, operation):
