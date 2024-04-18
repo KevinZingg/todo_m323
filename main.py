@@ -36,14 +36,18 @@ def update_task(tasks, index, task):
     print("Debug: Updated task at index", index, "with", task)
     return tasks[:index] + [task] + tasks[index+1:]
 
-def filter_tasks(tasks, category=None, deadline=None):
-    if category:
-        tasks = filter(lambda x: x['category'].lower() == category.lower(), tasks)
-    if deadline:
-        tasks = filter(lambda x: datetime.strptime(x['deadline'], '%Y-%m-%d') <= datetime.strptime(deadline, '%Y-%m-%d'), tasks)
-    filtered_tasks = list(tasks)
-    print("Debug: Filtered tasks", filtered_tasks)
-    return filtered_tasks
+def filter_tasks(tasks, filters, index=0):
+    if index >= len(filters):
+        print("Debug: Filtered tasks", tasks)
+        return tasks
+
+    current_filter_key, current_filter_value = filters[index]
+    if current_filter_key == 'category':
+        filtered_tasks = list(filter(lambda x: x['category'].lower() == current_filter_value.lower(), tasks))
+    elif current_filter_key == 'deadline':
+        filtered_tasks = list(filter(lambda x: datetime.strptime(x['deadline'], '%Y-%m-%d') <= datetime.strptime(current_filter_value, '%Y-%m-%d'), tasks))
+
+    return filter_tasks(filtered_tasks, filters, index + 1)  # Recursive call with the next filter index
 
 def refresh_listbox(app, listbox, tasks):
     listbox.delete(0, END)
@@ -87,9 +91,11 @@ def main_app(username):
 
     app.mainloop()
 
-def task_display_pipeline(username, app, listbox, category=None, deadline=None):
+def task_display_pipeline(username, app, listbox, filters=None):
     tasks = load_tasks(username)
-    filtered_tasks = filter_tasks(tasks, category, deadline)
+    if filters is None:
+        filters = []
+    filtered_tasks = filter_tasks(tasks, filters)
     refresh_listbox(app, listbox, filtered_tasks)
 
 def add_task_ui(app, username, listbox):
@@ -130,11 +136,20 @@ def remove_task_ui(username, listbox):
     save_tasks(username, tasks)
     refresh_listbox(None, listbox, tasks)
 
+
 def search_tasks_ui(username, app, listbox):
     tasks = load_tasks(username)
     category = simpledialog.askstring("Filter Tasks", "Enter category to filter by (leave blank for none):")
     deadline = simpledialog.askstring("Filter Tasks", "Enter deadline to filter by (YYYY-MM-DD, leave blank for none):")
-    filtered_tasks = filter_tasks(tasks, category, deadline)
+
+    filters = []
+    if category:
+        filters.append(('category', category))
+    if deadline:
+        filters.append(('deadline', deadline))
+
+    filtered_tasks = filter_tasks(tasks, filters)
     refresh_listbox(app, listbox, filtered_tasks)
+
 
 login()
